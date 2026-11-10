@@ -4,7 +4,7 @@
 
 ## 个人项目看板
 
-- 在线地址：[打开拾序个人项目看板](https://shixu-project-board-lh93.syrupy-crumb-2402.chatgpt.site)
+- 在线地址：[https://shixu-project-board-lh93.syrupy-crumb-2402.chatgpt.site](https://shixu-project-board-lh93.syrupy-crumb-2402.chatgpt.site)
 - 访问方式：私有访问，仅所有者登录 ChatGPT 后可打开。
 - 项目文档：[project-board/README.md](project-board/README.md)
 
