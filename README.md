@@ -26,3 +26,18 @@ python3 -m http.server 8000 --directory dist
 支持浏览器本地保存账号密码、按域名分组、JSON 导入导出，以及选择当前网站的账号填充登录表单。密码以明文保存，使用前请阅读项目文档中的存储说明。
 
 在 `chrome://extensions` 开启开发者模式，选择“加载已解压的扩展程序”，加载 `local-password-manager/` 文件夹。macOS 原目录升级脚本也位于该子目录内。
+
+## 文本对比工具 · DiffNote
+
+源码位于 [`text-compare/`](text-compare/)，在线地址固定记录在 [`text-compare/README.md`](text-compare/README.md)。
+
+[在线使用](https://text-compare-nov9-k7m.syrupy-crumb-2402.chatgpt.site/)
+
+默认使用 JSON，支持 Java、XML 等常见语言、差异高亮和代码块折叠。文本在浏览器本地处理。
+
+```sh
+cd text-compare
+python3 -m http.server 8000 --directory dist
+```
+
+已包含构建好的静态页面，可直接运行；编辑器源码修改与构建步骤见项目 README。
