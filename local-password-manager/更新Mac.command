@@ -10,6 +10,10 @@ fail() { printf '\n更新未完成：%s\n请不要卸载扩展。\n' "$1"; exit 
 trap 'printf "\n执行失败，原目录的代码备份位置（如已创建）：%s\n请保留 Chrome 中原扩展条目。\n" "${backup_dir:-尚未创建}"' ERR
 package_dir="$(cd "$(dirname "$0")" && pwd -P)"
 source_dir="$package_dir/local-password-manager"
+# 同时支持升级 ZIP（脚本旁边是扩展目录）和仓库项目目录内的脚本。
+if [ -r "$package_dir/manifest.json" ]; then
+  source_dir="$package_dir"
+fi
 [ -r "$source_dir/manifest.json" ] || fail '找不到更新包中的 manifest.json。请先完整解压，再运行此脚本。'
 
 # macOS 自带 JXA：解析 JSON，并检查清单引用的入口文件。

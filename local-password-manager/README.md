@@ -26,7 +26,7 @@
 请优先使用包含 `更新Mac.command` 的升级包，不要卸载原扩展。
 
 1. 如果旧版还能打开，先导出账号 JSON。
-2. 将升级包解压到与原安装目录不同的位置，保留 `更新Mac.command` 和旁边的新版 `local-password-manager` 文件夹。
+2. 将升级包解压到与原安装目录不同的位置，保留 `更新Mac.command` 和旁边的新版 `local-password-manager` 文件夹。从 Git 仓库下载时，也可直接运行项目目录内的 `更新Mac.command`。
 3. 双击 `更新Mac.command`，选择 Chrome 原来加载的 `local-password-manager` 文件夹。支持 `sh 更新Mac.command`，会自动切换至 Bash。若系统限制脚本打开，可在终端输入 `bash `（末尾有空格），把该 `.command` 文件拖入终端后回车运行。
 4. 脚本先校验新版、备份原代码，再逐个复制文件，最后写入并校验清单，保留原安装目录。
 5. 在 Chrome 原扩展条目上点击“重新加载”，或在加载错误弹窗中点击“重试”。新增权限按 Chrome 提示处理。
