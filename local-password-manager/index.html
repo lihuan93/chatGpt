@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>本地账号簿</title><link rel="icon" href="icons/icon.png"><link rel="stylesheet" href="style.css"></head>
+<body>
+  <aside><a class="brand" href="index.html"><span class="brand-icon">▣</span> 本地账号簿</a><div class="nav-label">我的空间</div><div class="nav-item">◈　全部账号 <span id="side-count">0</span></div><div class="aside-bottom"><i></i> 仅保存在此浏览器<br><small>无需登录 · 无云端同步</small></div></aside>
+  <main>
+    <header><span>个人空间 <b>/</b> 账号管理</span><span class="local-badge">● 本地存储</span></header>
+    <section class="heading"><div><div class="eyebrow">YOUR PRIVATE SPACE</div><h1>把账号，放在手边。</h1><p>集中整理常用网址与登录信息，随时查找、轻松备份。</p></div><button class="primary" id="add">＋ 新增账号</button></section>
+    <section class="stats"><article><span>已保存账号</span><strong id="total">0</strong><small>所有登录信息，一处管理</small></article><article><span>关联网站</span><strong id="sites">0</strong><small>按域名归类</small></article><article class="privacy"><span>你的数据，由你掌握</span><p>数据与导出文件均为明文。<br>请仅在可信设备使用，并妥善保管备份。</p><small>打开登录页，点击扩展图标选择账号填充</small></article></section>
+    <section class="accounts"><div class="section-title"><h2>账号列表 <span id="visible-count">0</span></h2><div class="tools"><button id="import">↓ 导入 JSON</button><button id="export">↑ 导出全部</button></div></div><div class="search-row"><input id="search" type="search" placeholder="搜索名称、账号、网址或备注…" aria-label="搜索账号"><span>按域名分组 · 组内最近更新优先</span></div><div id="list"></div></section>
+    <footer>本地账号簿 <span>卸载扩展会删除本地数据，请定期导出备份。</span></footer>
+  </main>
+  <dialog id="editor"><form id="account-form"><div class="dialog-heading"><h2 id="editor-title">新增账号</h2><button type="button" data-close="editor" class="icon-button" aria-label="关闭">×</button></div><label>网站地址<input name="url" type="url" required placeholder="https://example.com/login"></label><label>名称<input name="name" placeholder="例如：工作邮箱" maxlength="200"></label><label>登录账号<input name="username" autocomplete="off" placeholder="用户名 / 邮箱 / 手机号" required></label><label>密码<div class="password-field"><input name="password" type="password" autocomplete="new-password" required><button type="button" id="toggle-editor">显示</button></div></label><p id="account-hint" class="account-hint" role="status" aria-live="polite" hidden></p><label>备注<textarea name="notes" rows="3" placeholder="补充说明（可选）"></textarea></label><div class="dialog-actions"><button type="button" data-close="editor">取消</button><button type="submit" class="primary">保存账号</button></div></form></dialog>
+  <dialog id="importer"><div class="dialog-heading"><h2>导入账号</h2><button data-close="importer" class="icon-button" aria-label="关闭">×</button></div><p class="muted">支持原有“网址 → 账号数组”JSON。网址、用户名和密码全部相同时跳过；密码不同会保留为独立条目。</p><label class="file-label">选择 JSON 文件<input id="file" type="file" accept=".json,application/json"></label><label>或粘贴 JSON<textarea id="import-text" rows="8" spellcheck="false" placeholder='{"https://example.com": [{"username": "demo", "password": "…"}]}'></textarea></label><p id="import-preview" class="muted" aria-live="polite"></p><div class="dialog-actions"><button data-close="importer">取消</button><button id="import-submit" class="primary">检查并导入</button></div></dialog>
+  <dialog id="confirm-dialog"><h2 id="confirm-title"></h2><p id="confirm-message"></p><div class="dialog-actions"><button id="confirm-cancel">取消</button><button id="confirm-ok" class="primary">确认</button></div></dialog>
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+  <script type="module" src="app.js"></script>
+</body></html>
