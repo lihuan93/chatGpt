@@ -14,7 +14,9 @@ const theme=EditorView.theme({
  '.cm-foldPlaceholder':{background:'#edf2e8',border:'1px solid #cddbc7',borderRadius:'3px',color:'#48714d',padding:'0 5px',cursor:'pointer'},
  '&.cm-focused':{outline:'2px solid #b1d0bd',outlineOffset:'-2px'},
  '.cm-added':{backgroundColor:'#d9efdf',boxShadow:'0 1px 0 #85b795'},
- '.cm-removed':{backgroundColor:'#f8e1db',textDecoration:'line-through',boxShadow:'0 1px 0 #dcaa9a'}
+ '.cm-removed':{backgroundColor:'#f8e1db',textDecoration:'line-through',boxShadow:'0 1px 0 #dcaa9a'},
+ '.cm-line-added':{backgroundColor:'#eff8f1'},
+ '.cm-line-removed':{backgroundColor:'#fff1ed'}
 });
 function codeRanges(state){
  ensureSyntaxTree(state,state.doc.length,1000);
@@ -26,7 +28,7 @@ function codeRanges(state){
  }
  return result;
 }
-export function create(parent,{value='',language='json',readOnly=false,label='代码',changes=[],onChange}={}){
+export function create(parent,{value='',language='json',readOnly=false,label='代码',changes=[],changedLines=[],changeSide='right',onChange}={}){
  const languageSlot=new Compartment();
  let hoverPosition=null;
  function foldEveryLevel(view){
@@ -70,7 +72,11 @@ export function create(parent,{value='',language='json',readOnly=false,label='�
   {key:'Ctrl-Alt-]',mac:'Cmd-Alt-Shift-]',run:view=>{unfoldAll(view);return true;}}
  ];
  const decorations=[];let at=0;for(const chunk of changes){const end=at+chunk.text.length;if(end>at&&chunk.type!=='same')decorations.push(Decoration.mark({class:chunk.type==='add'?'cm-added':'cm-removed'}).range(at,end));at=end;}
- const view=new EditorView({parent,state:EditorState.create({doc:value,extensions:[languageSlot.of(languageExtensions(language,readOnly)),lineNumbers(),foldGutter({openText:'⌄',closedText:'›'}),codeFolding({placeholderText:' … '}),syntaxHighlighting(defaultHighlightStyle),bracketMatching(),indentOnInput(),drawSelection(),history(),keymap.of([...foldingKeys,...defaultKeymap,...historyKeymap,indentWithTab]),theme,EditorView.lineWrapping,EditorState.readOnly.of(readOnly),EditorView.editable.of(!readOnly),EditorView.contentAttributes.of({'aria-label':label,spellcheck:'false',...(readOnly?{tabindex:'0'}:{})}),EditorView.domEventHandlers({mousemove(event,view){hoverPosition=view.posAtCoords({x:event.clientX,y:event.clientY});},keydown(){hoverPosition=null;}}),EditorView.decorations.of(Decoration.set(decorations)),...(!readOnly?[EditorState.changeFilter.of(tr=>!tr.docChanged||tr.newDoc.length<=20000)]:[]),EditorView.updateListener.of(update=>{if(update.selectionSet||update.docChanged)hoverPosition=null;if(update.docChanged)onChange?.(update.state.doc.toString());})]})});
+ const doc=EditorState.create({doc:value}).doc;
+ for(const number of new Set(changedLines)){
+  if(number>=1&&number<=doc.lines)decorations.push(Decoration.line({class:changeSide==='left'?'cm-line-removed':'cm-line-added'}).range(doc.line(number).from));
+ }
+ const view=new EditorView({parent,state:EditorState.create({doc:value,extensions:[languageSlot.of(languageExtensions(language,readOnly)),lineNumbers(),foldGutter({openText:'⌄',closedText:'›'}),codeFolding({placeholderText:' … '}),syntaxHighlighting(defaultHighlightStyle),bracketMatching(),indentOnInput(),drawSelection(),history(),keymap.of([...foldingKeys,...defaultKeymap,...historyKeymap,indentWithTab]),theme,EditorView.lineWrapping,EditorState.readOnly.of(readOnly),EditorView.editable.of(!readOnly),EditorView.contentAttributes.of({'aria-label':label,spellcheck:'false',...(readOnly?{tabindex:'0'}:{})}),EditorView.domEventHandlers({mousemove(event,view){hoverPosition=view.posAtCoords({x:event.clientX,y:event.clientY});},keydown(){hoverPosition=null;}}),EditorView.decorations.of(Decoration.set(decorations,true)),...(!readOnly?[EditorState.changeFilter.of(tr=>!tr.docChanged||tr.newDoc.length<=20000)]:[]),EditorView.updateListener.of(update=>{if(update.selectionSet||update.docChanged)hoverPosition=null;if(update.docChanged)onChange?.(update.state.doc.toString());})]})});
  return {view,getValue(){return view.state.doc.toString();},foldedCount(){let count=0;foldedRanges(view.state).between(0,view.state.doc.length,()=>count++);return count;},setValue(value){if(value!==view.state.doc.toString())view.dispatch({changes:{from:0,to:view.state.doc.length,insert:value}});},setLanguage(name){unfoldAll(view);hoverPosition=null;view.dispatch({effects:languageSlot.reconfigure(languageExtensions(name,readOnly))});},fold(){return foldEveryLevel(view);},unfold(){return unfoldAll(view);},foldCurrent(){return foldCurrent(view,true);},unfoldCurrent(){return unfoldCurrent(view,true);},focus(){view.focus();},destroy(){view.destroy();}};
 }
 // Exposed for deterministic parser checks without a browser renderer.

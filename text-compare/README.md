@@ -3,12 +3,12 @@
 ## Chrome 扩展安装（推荐）
 
 已安装用户优先使用 macOS 原目录升级包：
-https://github.com/lihuan93/chatGpt/raw/refs/heads/main/text-compare/releases/diffnote-chrome-1.2.0-upgrade-mac.zip
+https://github.com/lihuan93/chatGpt/raw/refs/heads/main/text-compare/releases/diffnote-chrome-1.3.0-upgrade-mac.zip
 
 首次安装完整包：
-https://github.com/lihuan93/chatGpt/raw/refs/heads/main/text-compare/releases/diffnote-chrome-1.2.0.zip
+https://github.com/lihuan93/chatGpt/raw/refs/heads/main/text-compare/releases/diffnote-chrome-1.3.0.zip
 
-安装包固定放在 `releases/diffnote-chrome-1.2.0.zip`，解压后即可安装，无需联网或启动服务器。
+安装包固定放在 `releases/diffnote-chrome-1.3.0.zip`，解压后即可安装，无需联网或启动服务器。
 
 1. 打开 Chrome，输入 `chrome://extensions`。
 2. 开启右上角「开发者模式」。
@@ -21,7 +21,7 @@ https://github.com/lihuan93/chatGpt/raw/refs/heads/main/text-compare/releases/di
 
 ### 原目录升级（macOS）
 
-参考“本地账号簿”插件的升级流程，优先使用 `diffnote-chrome-1.2.0-upgrade-mac.zip`：
+参考“本地账号簿”插件的升级流程，优先使用 `diffnote-chrome-1.3.0-upgrade-mac.zip`：
 
 1. 保存正在对比的文本，关闭旧 DiffNote 标签页。未保存文本不会进入代码备份。
 2. 把升级包解压到独立位置，保留 `更新Mac.command`、`升级说明.txt` 和旁边的 `diffnote/` 文件夹。不要替换或删除整个旧安装文件夹。
@@ -35,7 +35,7 @@ https://github.com/lihuan93/chatGpt/raw/refs/heads/main/text-compare/releases/di
 
 若 Chrome 提示 `Manifest is not valid JSON` / `Can't read file`，先确认原目录根层直接有完整解压的清单文件，没有多嵌套一层、没有云盘占位文件。清单校验通过仍不可读时，检查 macOS「隐私与安全性 → 文件与文件夹」中的 Chrome 目录访问权限（如有开关）。原目录升级可避免替换整个文件夹，但无法自动修复系统权限；没有具体报错时不能断定原因。
 
-本包为 v1.2.0，新增结果同步滚动与输入框高度联动。升级后需要手动重新加载，不提供商店自动更新。
+本包为 v1.3.0，新增左右差异行的整行背景色。升级后需要手动重新加载，不提供商店自动更新。
 
 ### 修改和重新打包扩展
 
@@ -44,7 +44,13 @@ npm ci
 npm run build:extension
 ```
 
-构建会更新 `extension/`、完整包 `releases/diffnote-chrome-1.2.0.zip` 和原目录升级包 `releases/diffnote-chrome-1.2.0-upgrade-mac.zip`。扩展配置位于 `chrome/manifest.json`，图标点击逻辑位于 `chrome/background.js`。安装包与 `extension/` 都是生成文件，请修改 `dist/`、`src/` 或 `chrome/` 后重新构建。
+构建会更新 `extension/`、完整包 `releases/diffnote-chrome-1.3.0.zip` 和原目录升级包 `releases/diffnote-chrome-1.3.0-upgrade-mac.zip`。扩展配置位于 `chrome/manifest.json`，图标点击逻辑位于 `chrome/background.js`。安装包与 `extension/` 都是生成文件，请修改 `dist/`、`src/` 或 `chrome/` 后重新构建。
+
+## 差异行背景色
+
+对比结果中的变化行，左侧整行显示浅红底、右侧整行显示浅绿底，具体新增和删除的字符仍用更深颜色标记。纯新增或删除也会标出另一侧对应变化位置所在的行；不添加占位行或更改文本。相同的其他行保持原背景，忽略规则判定一致的内容不标色。
+
+差异行回归测试：`CHROMIUM_PATH=/usr/bin/chromium npm run test:lines`，覆盖修改/新增/删除、空文本、忽略选项、换行与 Unicode、整行底色及折叠后的高亮保留。
 
 ## 同步滚动与输入框高度
 
