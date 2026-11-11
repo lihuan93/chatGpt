@@ -5,7 +5,8 @@
   "scripts": {
     "build": "esbuild src/code-editor.js --bundle --minify --format=iife --global-name=DiffEditor --outfile=dist/vendor/code-editor.js --legal-comments=eof",
     "build:extension": "npm run build && python3 scripts/build-extension.py",
-    "test:folding": "node tests/folding.cjs"
+    "test:folding": "node tests/folding.cjs",
+    "test:layout": "node tests/layout.cjs"
   },
   "dependencies": {
     "@codemirror/commands": "^6.8.0",

@@ -23,3 +23,16 @@ with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as bundle:
             bundle.write(path, path.relative_to(OUTPUT))
 print(f'Unpacked extension: {OUTPUT}')
 print(f'Install / Chrome Web Store ZIP: {archive}')
+upgrade = releases / f'diffnote-chrome-{manifest["version"]}-upgrade-mac.zip'
+with zipfile.ZipFile(upgrade, 'w', zipfile.ZIP_DEFLATED) as bundle:
+    for name in ['更新Mac.command', '升级说明.txt']:
+        path = ROOT / name
+        info = zipfile.ZipInfo(name)
+        info.create_system = 3
+        info.external_attr = (0o100755 if name.endswith('.command') else 0o100644) << 16
+        info.compress_type = zipfile.ZIP_DEFLATED
+        bundle.writestr(info, path.read_bytes())
+    for path in sorted(OUTPUT.rglob('*')):
+        if path.is_file():
+            bundle.write(path, 'diffnote/' + str(path.relative_to(OUTPUT)))
+print(f'macOS in-place upgrade ZIP: {upgrade}')

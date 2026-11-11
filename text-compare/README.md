@@ -2,9 +2,13 @@
 
 ## Chrome 扩展安装（推荐）
 
-直接下载 v1.1.0：https://github.com/lihuan93/chatGpt/raw/refs/heads/main/text-compare/releases/diffnote-chrome-1.1.0.zip
+已安装用户优先使用 macOS 原目录升级包：
+https://github.com/lihuan93/chatGpt/raw/refs/heads/main/text-compare/releases/diffnote-chrome-1.2.0-upgrade-mac.zip
 
-安装包固定放在 `releases/diffnote-chrome-1.1.0.zip`，解压后即可安装，无需联网或启动服务器。
+首次安装完整包：
+https://github.com/lihuan93/chatGpt/raw/refs/heads/main/text-compare/releases/diffnote-chrome-1.2.0.zip
+
+安装包固定放在 `releases/diffnote-chrome-1.2.0.zip`，解压后即可安装，无需联网或启动服务器。
 
 1. 打开 Chrome，输入 `chrome://extensions`。
 2. 开启右上角「开发者模式」。
@@ -13,7 +17,25 @@
 
 扩展默认 JSON，保留 Java、XML 等语言选择、代码块折叠与差异高亮。所有资源随扩展打包，可离线使用，不申请网站读取权限，不上传文本，不自动保存输入内容。关闭或刷新对比页会清空输入。
 
-目前提供开发者模式安装包，尚未上架 Chrome 应用商店。更新时替换解压目录内容，再到扩展管理页点击「重新加载」。
+目前提供开发者模式安装包，尚未上架 Chrome 应用商店。
+
+### 原目录升级（macOS）
+
+参考“本地账号簿”插件的升级流程，优先使用 `diffnote-chrome-1.2.0-upgrade-mac.zip`：
+
+1. 保存正在对比的文本，关闭旧 DiffNote 标签页。未保存文本不会进入代码备份。
+2. 把升级包解压到独立位置，保留 `更新Mac.command`、`升级说明.txt` 和旁边的 `diffnote/` 文件夹。不要替换或删除整个旧安装文件夹。
+3. 双击 `更新Mac.command`，选择 Chrome 原来加载的目录，即旧 `manifest.json` 所在层。旧目录可以是 `diffnote-chrome-1.0.0`、`extension` 或自定义名称。也可从本项目目录运行脚本，使用旁边的 `extension/` 作为新版资源。
+4. 脚本校验新版和原目录身份、备份旧代码，再逐文件更新；最后写入并校验清单。保留原目录及已有清单文件本身，不访问 Chrome 配置。
+5. 等待“升级完成”，在 `chrome://extensions` 的原条目点「重新加载」或错误弹窗的「重试」，再点击扩展图标打开。
+
+若脚本不能双击，可在终端输入 `bash `，拖入 `.command` 文件后回车；也支持 `sh 更新Mac.command`。不需要 sudo 或关闭 macOS 安全设置。
+
+脚本备份在原目录旁的 `diffnote-backup.XXXXXX`，只包含代码。可修复旧 DiffNote 目录中缺失或损坏的 `manifest.json`。若整个原目录已被删除，需找回原目录或重新加载新版目录。
+
+若 Chrome 提示 `Manifest is not valid JSON` / `Can't read file`，先确认原目录根层直接有完整解压的清单文件，没有多嵌套一层、没有云盘占位文件。清单校验通过仍不可读时，检查 macOS「隐私与安全性 → 文件与文件夹」中的 Chrome 目录访问权限（如有开关）。原目录升级可避免替换整个文件夹，但无法自动修复系统权限；没有具体报错时不能断定原因。
+
+本包为 v1.2.0，新增结果同步滚动与输入框高度联动。升级后需要手动重新加载，不提供商店自动更新。
 
 ### 修改和重新打包扩展
 
@@ -22,7 +44,15 @@ npm ci
 npm run build:extension
 ```
 
-构建会更新 `extension/` 和 `releases/diffnote-chrome-1.1.0.zip`。扩展配置位于 `chrome/manifest.json`，图标点击逻辑位于 `chrome/background.js`。安装包与 `extension/` 都是生成文件，请修改 `dist/`、`src/` 或 `chrome/` 后重新构建。
+构建会更新 `extension/`、完整包 `releases/diffnote-chrome-1.2.0.zip` 和原目录升级包 `releases/diffnote-chrome-1.2.0-upgrade-mac.zip`。扩展配置位于 `chrome/manifest.json`，图标点击逻辑位于 `chrome/background.js`。安装包与 `extension/` 都是生成文件，请修改 `dist/`、`src/` 或 `chrome/` 后重新构建。
+
+## 同步滚动与输入框高度
+
+- 对比结果左右双向同步滚动：两边长度不同或折叠状态不同时按可滚动范围的比例联动，滚到底时两边都到底。这是滚动进度同步，不保证不同文本的行号逐行对齐。
+- 拖动任一输入代码框右下角调整高度时，另一个框同步变化；仍保留原有的最小和最大高度限制。
+- 重新对比、切换语言或清空后，不会保留旧结果的滚动监听。
+
+联动功能的浏览器回归测试：`CHROMIUM_PATH=/usr/bin/chromium npm run test:layout`，覆盖双向滚动、长短文本、单侧折叠、原生拖动手柄、清空/重新对比和窄屏。
 
 ## 代码折叠与快捷键
 
@@ -54,6 +84,8 @@ TEST_MAC=1 CHROMIUM_PATH=/usr/bin/chromium npm run test:folding
 ```
 
 `CHROMIUM_PATH` 改为本机浏览器路径；第二条命令在 Chromium 中模拟 macOS 键位。未指定浏览器路径时使用 Playwright 默认安装的 Chromium，可用 `npx playwright-core install chromium` 安装。测试验证打包页面及扩展 CSP，不代替实际扩展安装验证。
+
+升级脚本可在 Linux 上执行流程模拟测试：`python3 tests/upgrade.py`，覆盖备份、原目录/清单 inode 保留、损坏清单修复、误选目录、符号链接拒绝、Bash/sh 和仓库布局。测试用 Node 模拟 macOS Foundation 文件读取桥接；未替代 Mac 实机的 Finder、JXA 和 Chrome 升级验证。
 
 ## 在线地址
 

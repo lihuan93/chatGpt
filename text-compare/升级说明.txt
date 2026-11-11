@@ -1,0 +1,31 @@
+DiffNote Chrome 文本对比插件 · macOS 原目录升级
+
+1. 先复制保存正在对比的文本，关闭旧的 DiffNote 标签页。
+2. 将升级 ZIP 完整解压到新的位置；不要覆盖或删除旧安装文件夹。
+3. 双击“更新Mac.command”，在弹窗中选择 Chrome 原来加载的文件夹。
+   旧文件夹名称可能是 diffnote-chrome-1.0.0、extension 或你自己取的名字。
+   选择包含原 manifest.json 的那一层，不要选择新包中的 diffnote。
+4. 等脚本显示“升级完成”，到 chrome://extensions，在原 DiffNote 条目点击“重新加载”。
+   若显示加载错误弹窗，点击“重试”。随后重新点击扩展图标打开。
+
+脚本会先校验新版文件、备份旧代码，逐个更新资源，最后写入并校验 manifest.json。
+原安装目录保持原位，不更换整个文件夹，不卸载扩展，不访问 Chrome 用户配置。
+代码备份在原安装目录旁的 diffnote-backup.XXXXXX 中；它不包含未保存的对比文本。
+
+如果脚本不能双击运行：打开“终端”，输入 bash 和一个空格，把“更新Mac.command”
+拖入终端窗口，再按回车。也支持 sh 更新Mac.command；无需 sudo。
+不要运行网上来源不明的命令来关闭系统安全设置。
+
+如果提示 Manifest is not valid JSON / Can't read file：
+- 选中的必须是 Chrome 原来加载的目录，根层直接包含 manifest.json，不能多嵌套一层。
+- 先完整解压 ZIP；云盘目录需确保文件已实际下载到本机。
+- 如果清单校验通过但 Chrome 仍无法读取，请检查 macOS“系统设置 → 隐私与安全性 →
+  文件与文件夹”中 Chrome 对原目录所在位置的访问权限（如有对应开关）。
+- 此升级脚本可修复旧 DiffNote 目录中缺失或损坏的 manifest.json；如果整个原目录已被删除，
+  需要先找回旧目录，或重新在 Chrome 中加载新版 diffnote 文件夹。
+
+首次安装：在 chrome://extensions 开启“开发者模式”，点击“加载已解压的扩展程序”，
+选择本升级包中的 diffnote 文件夹即可。已安装用户使用上述原目录升级步骤。
+
+本包为 v1.2.0：新增左右对比结果同步滚动，以及两个输入框拖动高度时同步调整；保留代码折叠和快捷键。
+未打包扩展需手动升级并重新加载，本包不提供 Chrome 应用商店自动更新。
