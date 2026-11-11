@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "DiffNote · 文本对比",
+  "version": "1.1.0",
+  "description": "离线对比文本和代码，默认 JSON，支持 Java、XML 等语言、差异高亮和代码折叠。",
+  "action": {
+    "default_title": "打开 DiffNote 文本对比",
+    "default_icon": {"16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png"}
+  },
+  "icons": {"16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png"},
+  "background": {"service_worker": "background.js"},
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; connect-src 'none'; base-uri 'none'"
+  }
+}
