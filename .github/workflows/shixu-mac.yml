@@ -1,0 +1,35 @@
+name: Build Shixu for Apple Silicon
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mac:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: project-board
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: project-board/package-lock.json
+      - name: Install Rust and Apple Silicon target
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup target add aarch64-apple-darwin
+      - run: npm ci
+      - run: npm test
+      - run: cargo test --locked --manifest-path src-tauri/Cargo.toml -p shixu-storage
+      - name: Build unsigned local-use app and DMG
+        run: npm run desktop:build -- --ci
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shixu-mac-apple-silicon
+          path: |
+            project-board/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+          retention-days: 14

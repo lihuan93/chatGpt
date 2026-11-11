@@ -1,8 +1,376 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f7f8fa"><title>拾序 · 个人项目看板</title><link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/svg+xml" href="favicon.svg"><link rel="stylesheet" href="style.css"></head><body>
-<aside class="sidebar"><a class="brand" href="#"><span class="brand-icon">▥</span> 拾序<span class="brand-en">SHIXU</span></a><div class="workspace-label">个人工作空间</div><button class="nav active">▦ <span>项目看板</span><span class="nav-dot"></span></button><div class="sidebar-note"><span>✦</span><h3>把想法，慢慢做成。</h3><p>一次专注一个小进展，<br>每一步都算数。</p></div><div class="local-status"><i></i> 本地存储已启用<small>数据保存在当前浏览器</small></div></aside>
-<main><header><div class="breadcrumb">个人工作空间 <span>/</span> 项目看板</div><div class="avatar" aria-label="个人空间">我</div></header><section class="heading"><div><div class="eyebrow">YOUR IDEAS, IN MOTION</div><h1>让每一个想法，都有进展<span>。</span></h1><p>整理手头的项目，留一点空间给下一个灵感。</p></div><button class="primary" id="add">＋ 新建项目</button></section>
-<section class="stats" aria-label="项目统计"><article><span>全部项目</span><strong id="total">0</strong><small>每一个开始都值得记录</small></article><article><span><i class="dot blue"></i>正在进行</span><strong id="activeCount">0</strong><small>保持专注，稳步向前</small></article><article><span><i class="dot green"></i>已经完成</span><strong id="doneCount">0</strong><small>给自己的努力一个肯定</small></article><article class="progress-stat"><span>项目完成率 <b id="rateLabel">0%</b></span><div class="progress"><i id="rateBar"></i></div><small id="rateText">从一个小目标开始</small></article></section>
-<section class="projects"><div class="section-top"><h2>我的项目 <span id="countBadge">0</span></h2><div class="tools"><button id="weekly">▤ 一键整理周报</button><button id="import">↥ 导入</button><button id="export">↧ 导出</button><input type="file" id="file" accept="application/json,.json" hidden></div></div><div class="toolbar"><div class="tabs" aria-label="筛选状态"><button class="selected" data-filter="all">全部项目</button><button data-filter="todo">待开始</button><button data-filter="active">进行中</button><button data-filter="done">已完成</button></div><label class="search"><span>⌕</span><input type="search" id="search" placeholder="搜索项目、标签…" aria-label="搜索项目"></label></div><div class="grid" id="grid"></div><div class="empty" id="empty" hidden><span>⌕</span><h3>这里还没有项目</h3><p id="emptyText">新建一个项目，让想法开始发生。</p><button class="primary" id="emptyAdd">＋ 新建项目</button></div></section><footer><span>少一点忙乱，多一点进展。</span><span>拾序 · 你的个人项目空间</span></footer></main>
-<dialog id="editor"><form id="form"><div class="modal-title"><h2 id="modalTitle">新建项目</h2><button type="button" id="close" class="icon-button" aria-label="关闭">×</button></div><label>项目名称 <span>*</span><input id="name" required maxlength="80" placeholder="你想做些什么？"></label><label>项目描述<textarea id="description" maxlength="600" rows="3" placeholder="简单说说目标和下一步…"></textarea></label><div class="form-row"><label>当前状态<select id="status"><option value="todo">待开始</option><option value="active">进行中</option><option value="done">已完成</option></select></label><label>优先级<select id="priority"><option value="medium">中优先级</option><option value="high">高优先级</option><option value="low">低优先级</option></select></label></div><div class="form-row"><label>截止日期<input type="date" id="due"></label><label>标签<input id="tags" maxlength="100" placeholder="用逗号分隔，如：学习, 生活"></label></div><label id="completedLabel" hidden>完成日期<input type="date" id="completed"><small>旧项目可补填；留空则不计入某周完成。</small></label><label>项目链接<input type="url" id="link" placeholder="https://github.com/…"></label><div class="modal-actions"><button type="button" id="cancel">取消</button><button class="primary" type="submit">保存项目</button></div></form></dialog>
-<dialog id="confirm"><h2>删除这个项目？</h2><p>删除后无法撤销，建议先导出备份。</p><div class="modal-actions"><button id="keep">保留项目</button><button class="danger" id="deleteConfirm">确认删除</button></div></dialog><dialog id="report"><div class="modal-title"><h2>一键整理周报</h2><button id="closeReport" class="icon-button" aria-label="关闭周报">×</button></div><p class="report-note">从全部项目整理，按北京时间周一至周日统计。可直接编辑下方内容，再复制或下载。</p><label class="report-date">选择周内任意一天<input type="date" id="reportDate"></label><label class="report-content" for="reportText">周报内容（Markdown）</label><textarea id="reportText" rows="18" spellcheck="false"></textarea><p class="report-note">切换日期会重新生成内容，并覆盖当前草稿。</p><div class="modal-actions"><button id="downloadReport">↓ 下载 Markdown</button><button id="copyReport" class="primary">复制周报</button></div></dialog><div id="toast" role="status" hidden></div><script src="weekly-report.js"></script><script src="app.js"></script></body></html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#f5f7f5" />
+    <title>拾序 · 个人工作台</title>
+    <link rel="icon" href="favicon.ico" sizes="any" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <aside class="sidebar">
+      <a class="brand" href="#"
+        ><span class="brand-icon">▥</span> 拾序 <small>SHIXU</small></a
+      >
+      <p class="workspace-label">个人工作空间</p>
+      <nav aria-label="主导航">
+        <button data-view="tasks" class="nav active">
+          ▦ <span>我的任务</span></button
+        ><button data-view="projects" class="nav">
+          ◇ <span>项目归类</span></button
+        ><button data-view="records" class="nav">✎ <span>工作记录</span></button
+        ><button data-view="reports" class="nav">▤ <span>每周汇报</span></button
+        ><button data-view="career" class="nav">✧ <span>工作积累</span></button>
+      </nav>
+      <div class="sidebar-note">
+        <span>✦</span>
+        <h3>让进展，留下痕迹。</h3>
+        <p>记录今天的工作，<br />积累明天的底气。</p>
+      </div>
+      <div class="local-status">
+        <i></i> <span id="storageMode">正在连接数据…</span
+        ><small id="saveStatus" role="status">正在读取…</small
+        ><button id="backup">导出备份</button
+        ><button id="restore">恢复备份</button>
+        <button id="desktopData" hidden>本机数据</button>
+      </div>
+    </aside>
+    <main>
+      <header>
+        <div>个人工作空间 <span>/</span> <b id="breadcrumb">我的任务</b></div>
+        <div class="header-tools">
+          <button id="importOpen">↥ 导入任务 CSV</button
+          ><span class="avatar">我</span>
+        </div>
+      </header>
+      <div id="storageError" class="notice danger" hidden role="alert"></div>
+      <section class="heading">
+        <div>
+          <div class="eyebrow">YOUR WORK, YOUR STORY</div>
+          <h1 id="pageTitle">把每一步进展，留下来<span>。</span></h1>
+          <p id="pageHint">从一条任务开始，走向一份有据可循的工作积累。</p>
+        </div>
+        <button class="primary" id="addTask">＋ 新建任务</button>
+      </section>
+      <section id="stats" class="stats" aria-label="任务统计"></section>
+      <div id="viewRoot"></div>
+      <footer>
+        <span>少一点忙乱，多一点进展。</span><span>拾序 · 个人工作台</span>
+      </footer>
+    </main>
+    <dialog id="taskDialog">
+      <form id="taskForm">
+        <div class="modal-title">
+          <h2 id="taskTitle">新建任务</h2>
+          <button
+            type="button"
+            data-close="taskDialog"
+            class="icon-button"
+            aria-label="关闭"
+          >
+            ×
+          </button>
+        </div>
+        <p id="taskSource" class="muted"></p>
+        <label>任务标题 *<input name="title" required maxlength="2000" /></label
+        ><label
+          >任务描述<textarea
+            name="description"
+            rows="3"
+            maxlength="10000"
+            placeholder="背景、目标或下一步"
+          ></textarea>
+        </label>
+        <div class="form-row">
+          <label>所属项目<select name="projectId" required></select></label
+          ><label>模块（可选）<input name="module" maxlength="100" /></label
+          ><label>任务状态<select name="status"></select></label
+          ><label>优先级<select name="priority"></select></label
+          ><label>截止日期<input type="date" name="due" /></label
+          ><label
+            >实际完成日期<input type="date" name="completedAt" /><small
+              >仅“已完成”有效；未知请留空</small
+            ></label
+          ><label>执行者<input name="assignee" maxlength="200" /></label
+          ><label
+            >标签<input
+              name="tags"
+              maxlength="1000"
+              placeholder="多个标签用逗号分隔"
+          /></label>
+        </div>
+        <label
+          >来源或文档链接<input
+            name="link"
+            type="url"
+            placeholder="https://…" /></label
+        ><label class="check"
+          ><input name="focus" type="checkbox" /> 本周关注</label
+        >
+        <div class="modal-actions">
+          <button type="button" data-close="taskDialog">取消</button
+          ><button class="primary">保存任务</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="projectDialog">
+      <form id="projectForm">
+        <div class="modal-title">
+          <h2>项目归类</h2>
+          <button
+            type="button"
+            data-close="projectDialog"
+            class="icon-button"
+            aria-label="关闭"
+          >
+            ×
+          </button>
+        </div>
+        <label>项目名称 *<input name="name" required maxlength="200" /></label
+        ><label
+          >项目说明<textarea
+            name="description"
+            rows="3"
+            maxlength="10000"
+          ></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="button" data-close="projectDialog">取消</button
+          ><button class="primary">保存项目</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="recordDialog">
+      <form id="recordForm">
+        <div class="modal-title">
+          <h2 id="recordTitle">记一条进展</h2>
+          <button
+            type="button"
+            data-close="recordDialog"
+            class="icon-button"
+            aria-label="关闭"
+          >
+            ×
+          </button>
+        </div>
+        <label>关联任务 *<select name="taskId" required></select></label>
+        <div class="form-row">
+          <label>记录日期 *<input type="date" name="date" required /></label
+          ><label>交付阶段<select name="stage"></select></label>
+        </div>
+        <label
+          >今天推进了什么？ *<textarea
+            name="text"
+            required
+            rows="4"
+            maxlength="20000"
+            placeholder="做了什么、有什么结论、下一步是什么"
+          ></textarea></label
+        ><label
+          >处理结果<textarea
+            name="result"
+            rows="2"
+            maxlength="20000"
+            placeholder="已完成的结果、验证范围或真实数据；没有就留空"
+          ></textarea></label
+        ><label class="check"
+          ><input name="career" type="checkbox" />
+          标记为经历素材，长期积累</label
+        >
+        <details id="careerFields">
+          <summary>补充经历信息（可以以后再填）</summary>
+          <label
+            >背景与问题<textarea
+              name="background"
+              rows="2"
+              maxlength="20000"
+            ></textarea></label
+          ><label
+            >我的职责<textarea
+              name="role"
+              rows="2"
+              maxlength="20000"
+              placeholder="自己负责哪些部分，与他人如何分工"
+            ></textarea></label
+          ><label
+            >处理方案<textarea
+              name="solution"
+              rows="2"
+              maxlength="20000"
+            ></textarea></label
+          ><label
+            >难点<textarea
+              name="challenge"
+              rows="2"
+              maxlength="20000"
+            ></textarea></label
+          ><label>技术标签<input name="tags" maxlength="1000" /></label
+          ><label
+            >证据链接<input
+              type="url"
+              name="evidence"
+              placeholder="代码、测试结果或技术文档链接"
+          /></label>
+        </details>
+        <div class="modal-actions">
+          <button type="button" data-close="recordDialog">取消</button
+          ><button class="primary">保存记录</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="importDialog" class="wide">
+      <div class="modal-title">
+        <h2>导入任务 CSV</h2>
+        <button data-close="importDialog" class="icon-button" aria-label="关闭">
+          ×
+        </button>
+      </div>
+      <p class="muted">
+        按来源和任务 ID 新增或更新。缺失任务不删除，个人归类与工作记录不覆盖。
+      </p>
+      <div class="form-row">
+        <label
+          >来源名称<input
+            id="importSource"
+            value="我的任务"
+            maxlength="100" /></label
+        ><label
+          >选择文件<input id="csvFile" type="file" accept=".csv,text/csv"
+        /></label>
+      </div>
+      <p id="importSummary" class="notice">
+        支持“标题、任务ID、任务状态、优先级”等现有导出字段。UTF-8 / GB18030
+        编码。
+      </p>
+      <div id="importPreview" class="table-wrap"></div>
+      <div class="modal-actions">
+        <button data-close="importDialog">取消</button
+        ><button id="importApply" class="primary" disabled>确认导入</button>
+      </div>
+    </dialog>
+    <dialog id="dataDialog" class="wide">
+      <div class="modal-title">
+        <h2>本机数据与备份</h2>
+        <button data-close="dataDialog" class="icon-button" aria-label="关闭">
+          ×
+        </button>
+      </div>
+      <div id="dataInfo" class="muted"></div>
+      <p class="notice">
+        所有工作数据保存在本机 SQLite 中。恢复前会自动保留当前数据库快照；JSON
+        备份用于从网页版迁移或跨版本导出。
+      </p>
+      <div class="tools">
+        <button id="openDataFolder">打开数据目录</button
+        ><button id="databaseBackup">备份数据库</button
+        ><button id="databaseRestore">恢复数据库</button
+        ><button id="reloadData">重新加载数据</button>
+      </div>
+      <p class="muted">
+        自动备份位于数据目录的 backups
+        文件夹。请另存一份备份到其他磁盘，避免与原数据同时丢失。
+      </p>
+    </dialog>
+    <dialog id="historyDialog" class="wide">
+      <div class="modal-title">
+        <h2>导入历史</h2>
+        <button
+          data-close="historyDialog"
+          class="icon-button"
+          aria-label="关闭"
+        >
+          ×
+        </button>
+      </div>
+      <p class="muted">
+        保留每次导入的变化。仅能撤销最近一次；已有后续修改或引用时会阻止撤销。
+      </p>
+      <div id="historyRoot"></div>
+      <div class="modal-actions">
+        <button data-close="historyDialog">关闭</button
+        ><button id="undoImport">撤销最近一次导入</button>
+      </div>
+    </dialog>
+    <dialog id="confirmDialog">
+      <form method="dialog">
+        <h2 id="confirmTitle">请确认</h2>
+        <p id="confirmText" class="muted"></p>
+        <div class="modal-actions">
+          <button value="cancel">取消</button
+          ><button value="yes" class="primary">确认</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="reportEditDialog">
+      <form id="reportRowForm">
+        <div class="modal-title">
+          <h2>编辑周报事项</h2>
+          <button
+            type="button"
+            data-close="reportEditDialog"
+            class="icon-button"
+            aria-label="关闭"
+          >
+            ×
+          </button>
+        </div>
+        <p class="muted" id="rowLinks"></p>
+        <label>章节<select name="section"></select></label
+        ><label
+          >事项详情 *<textarea
+            name="details"
+            rows="7"
+            required
+            maxlength="20000"
+          ></textarea>
+        </label>
+        <div class="form-row">
+          <label>完成进度<select name="stage"></select></label
+          ><label>责任人<input name="owners" maxlength="1000" /></label>
+        </div>
+        <label
+          >备注（成果链接 / 关联资源 / 进度节点）<textarea
+            name="remarks"
+            rows="3"
+            maxlength="20000"
+          ></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="button" data-close="reportEditDialog">取消</button
+          ><button class="primary">保存事项</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="exportDialog" class="wide">
+      <div class="modal-title">
+        <h2 id="exportTitle">导出预览</h2>
+        <button data-close="exportDialog" class="icon-button" aria-label="关闭">
+          ×
+        </button>
+      </div>
+      <div id="exportPreview" class="table-wrap"></div>
+      <textarea
+        id="exportText"
+        rows="18"
+        aria-label="导出内容，可编辑"
+      ></textarea>
+      <div class="modal-actions">
+        <button id="copyExport">复制内容</button
+        ><button id="downloadExport" class="primary">下载文件</button>
+      </div>
+    </dialog>
+    <input
+      id="restoreFile"
+      type="file"
+      accept=".json,application/json"
+      hidden
+    />
+    <div id="toast" role="status" hidden></div>
+    <script src="weekly-report.js"></script>
+    <script src="workspace.js"></script>
+    <script src="storage.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
