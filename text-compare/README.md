@@ -3,12 +3,12 @@
 ## Chrome 扩展安装（推荐）
 
 已安装用户优先使用 macOS 原目录升级包：
-https://github.com/lihuan93/chatGpt/raw/refs/heads/main/text-compare/releases/diffnote-chrome-1.3.0-upgrade-mac.zip
+https://github.com/lihuan93/chatGpt/raw/refs/heads/main/text-compare/releases/diffnote-chrome-1.4.0-upgrade-mac.zip
 
 首次安装完整包：
-https://github.com/lihuan93/chatGpt/raw/refs/heads/main/text-compare/releases/diffnote-chrome-1.3.0.zip
+https://github.com/lihuan93/chatGpt/raw/refs/heads/main/text-compare/releases/diffnote-chrome-1.4.0.zip
 
-安装包固定放在 `releases/diffnote-chrome-1.3.0.zip`，解压后即可安装，无需联网或启动服务器。
+安装包固定放在 `releases/diffnote-chrome-1.4.0.zip`，解压后即可安装，无需联网或启动服务器。
 
 1. 打开 Chrome，输入 `chrome://extensions`。
 2. 开启右上角「开发者模式」。
@@ -21,7 +21,7 @@ https://github.com/lihuan93/chatGpt/raw/refs/heads/main/text-compare/releases/di
 
 ### 原目录升级（macOS）
 
-参考“本地账号簿”插件的升级流程，优先使用 `diffnote-chrome-1.3.0-upgrade-mac.zip`：
+参考“本地账号簿”插件的升级流程，优先使用 `diffnote-chrome-1.4.0-upgrade-mac.zip`：
 
 1. 保存正在对比的文本，关闭旧 DiffNote 标签页。未保存文本不会进入代码备份。
 2. 把升级包解压到独立位置，保留 `更新Mac.command`、`升级说明.txt` 和旁边的 `diffnote/` 文件夹。不要替换或删除整个旧安装文件夹。
@@ -35,7 +35,7 @@ https://github.com/lihuan93/chatGpt/raw/refs/heads/main/text-compare/releases/di
 
 若 Chrome 提示 `Manifest is not valid JSON` / `Can't read file`，先确认原目录根层直接有完整解压的清单文件，没有多嵌套一层、没有云盘占位文件。清单校验通过仍不可读时，检查 macOS「隐私与安全性 → 文件与文件夹」中的 Chrome 目录访问权限（如有开关）。原目录升级可避免替换整个文件夹，但无法自动修复系统权限；没有具体报错时不能断定原因。
 
-本包为 v1.3.0，新增左右差异行的整行背景色。升级后需要手动重新加载，不提供商店自动更新。
+本包为 v1.4.0，新增上一处/下一处差异定位。升级后需要手动重新加载，不提供商店自动更新。
 
 ### 修改和重新打包扩展
 
@@ -44,7 +44,19 @@ npm ci
 npm run build:extension
 ```
 
-构建会更新 `extension/`、完整包 `releases/diffnote-chrome-1.3.0.zip` 和原目录升级包 `releases/diffnote-chrome-1.3.0-upgrade-mac.zip`。扩展配置位于 `chrome/manifest.json`，图标点击逻辑位于 `chrome/background.js`。安装包与 `extension/` 都是生成文件，请修改 `dist/`、`src/` 或 `chrome/` 后重新构建。
+构建会更新 `extension/`、完整包 `releases/diffnote-chrome-1.4.0.zip` 和原目录升级包 `releases/diffnote-chrome-1.4.0-upgrade-mac.zip`。扩展配置位于 `chrome/manifest.json`，图标点击逻辑位于 `chrome/background.js`。安装包与 `extension/` 都是生成文件，请修改 `dist/`、`src/` 或 `chrome/` 后重新构建。
+
+## 快速定位差异
+
+结果工具栏提供「上一处不同」「下一处不同」，显示当前序号 / 总数，支持首尾循环。连续变化的行作为一处；同一行的多次修改只停一次。
+
+- **F7**：下一处不同；**Shift + F7**：上一处不同。
+- 左右结果同时跳到各自对应的精确位置，并用边框标明当前差异。目标被折叠时自动展开相关代码块。
+- 纯新增/删除的一侧没有文本时，定位另一侧对应的插入/删除位置。
+- 文本一致时按钮不可用。输入或忽略选项更改后，需重新对比再定位。
+- 点击导航使用精确差异位置；之后用鼠标滚动任一结果框，继续按滚动比例联动。
+
+导航回归测试：`CHROMIUM_PATH=/usr/bin/chromium npm run test:navigation`，覆盖首尾循环、F7 / Shift+F7、左右精确位置、自动展开目标、滚动联动恢复、重比/清空/一致状态、空侧锚点与窄屏。
 
 ## 差异行背景色
 

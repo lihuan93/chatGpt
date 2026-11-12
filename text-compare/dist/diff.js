@@ -16,7 +16,32 @@ function compareText(a,b,options={}) {
  }
  if(e)push('same',aa.slice(aa.length-e).join(''),bb.slice(bb.length-e).join(''));
  const merged=[];for(const v of parts){const prev=merged.at(-1);if(prev&&prev.type===v.type){prev.left+=v.left;prev.right+=v.right;}else merged.push({...v});}
- return {parts:merged,coarse,lineHighlights:changedLineNumbers(merged),added:merged.filter(x=>x.type==='add').reduce((n,x)=>n+Array.from(x.right).length,0),removed:merged.filter(x=>x.type==='delete').reduce((n,x)=>n+Array.from(x.left).length,0)};
+ return {parts:merged,coarse,differences:collectDifferenceLocations(merged),lineHighlights:changedLineNumbers(merged),added:merged.filter(x=>x.type==='add').reduce((n,x)=>n+Array.from(x.right).length,0),removed:merged.filter(x=>x.type==='delete').reduce((n,x)=>n+Array.from(x.left).length,0)};
+}
+function collectDifferenceLocations(parts){
+ const offsets={left:0,right:0},lines={left:1,right:1},result=[];
+ const newlines=text=>(text.match(/\n/g)||[]).length;
+ for(let i=0;i<parts.length;){
+  if(parts[i].type==='same'){
+   for(const side of ['left','right']){offsets[side]+=parts[i][side].length;lines[side]+=newlines(parts[i][side]);}
+   i++;continue;
+  }
+  const text={left:'',right:''},location={};
+  while(i<parts.length&&parts[i].type!=='same'){
+   for(const side of ['left','right'])text[side]+=parts[i][side];
+   i++;
+  }
+  for(const side of ['left','right']){
+   location[side]={from:offsets[side],to:offsets[side]+text[side].length,line:lines[side],endLine:lines[side]+newlines(text[side].slice(0,-1))};
+   offsets[side]+=text[side].length;lines[side]+=newlines(text[side]);
+  }
+  const previous=result.at(-1);
+  // Treat consecutive changed lines (and multiple edits on one line) as one stop.
+  if(previous&&['left','right'].every(side=>location[side].line<=previous[side].endLine+1)){
+   for(const side of ['left','right']){previous[side].to=location[side].to;previous[side].endLine=location[side].endLine;}
+  }else result.push(location);
+ }
+ return result;
 }
 // Pair adjacent delete/add chunks into one change. Even a one-sided insertion
 // or deletion marks its anchor line in the opposite pane, without changing text.

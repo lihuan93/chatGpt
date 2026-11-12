@@ -35,7 +35,7 @@ python3 -m http.server 8000 --directory dist
 
 默认使用 JSON，支持 Java、XML 等常见语言、差异高亮和代码块折叠。文本在浏览器本地处理。
 
-Chrome 扩展：在 `chrome://extensions` 开启开发者模式，点击「加载已解压的扩展程序」，选择 `text-compare/extension/`。点击扩展图标，在新标签页离线使用。安装 ZIP 位于 `text-compare/releases/diffnote-chrome-1.3.0.zip`，完整步骤见项目 README。支持折叠选区或当前代码块、包含内层的全部折叠、全部展开与快捷键。差异行左右显示整行背景色；左右结果同步滚动，两个输入框拖动高度时联动；已安装用户优先使用项目 README 中的原目录升级包。
+Chrome 扩展：在 `chrome://extensions` 开启开发者模式，点击「加载已解压的扩展程序」，选择 `text-compare/extension/`。点击扩展图标，在新标签页离线使用。安装 ZIP 位于 `text-compare/releases/diffnote-chrome-1.4.0.zip`，完整步骤见项目 README。支持折叠选区或当前代码块、包含内层的全部折叠、全部展开与快捷键。提供上一处/下一处差异定位与 F7 / Shift+F7；差异行左右显示整行背景色；左右结果同步滚动，两个输入框拖动高度时联动；已安装用户优先使用项目 README 中的原目录升级包。
 
 ```sh
 cd text-compare

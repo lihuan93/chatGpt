@@ -7,7 +7,8 @@
     "build:extension": "npm run build && python3 scripts/build-extension.py",
     "test:folding": "node tests/folding.cjs",
     "test:layout": "node tests/layout.cjs",
-    "test:lines": "node tests/line-highlights.cjs"
+    "test:lines": "node tests/line-highlights.cjs",
+    "test:navigation": "node tests/navigation.cjs"
   },
   "dependencies": {
     "@codemirror/commands": "^6.8.0",

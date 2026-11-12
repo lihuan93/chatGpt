@@ -2,6 +2,25 @@ const $=id=>document.getElementById(id),left=$('left'),right=$('right');let repo
 const language=$('language');
 function counts(){syncInputs();for(const [el,id] of [[left,'leftCount'],[right,'rightCount']])$(id).textContent=`${Array.from(el.value).length.toLocaleString()} 字符 · ${el.value?el.value.split(/\r\n?|\n/).length:0} 行`;}
 const inputEditors={};let resultEditors=[],disconnectResultScroll=()=>{};
+let differenceLocations=[],differenceIndex=-1;
+function updateDifferenceNavigation(stale=false){
+ const disabled=stale||!differenceLocations.length;
+ $('previousDifference').disabled=$('nextDifference').disabled=disabled;
+ $('differencePosition').textContent=stale?'请重新对比':`${differenceIndex+1} / ${differenceLocations.length}`;
+}
+function jumpDifference(step){
+ if($('nextDifference').disabled)return;
+ differenceIndex=differenceIndex<0?(step>0?0:differenceLocations.length-1):(differenceIndex+step+differenceLocations.length)%differenceLocations.length;
+ // A paired jump uses the exact positions, rather than the scroll progress.
+ disconnectResultScroll.pause?.();
+ const location=differenceLocations[differenceIndex];
+ resultEditors.forEach((editor,i)=>editor.revealDifference(location[i===0?'left':'right']));
+ updateDifferenceNavigation();
+ $('resultSection').scrollIntoView({block:'start'});
+}
+$('previousDifference').onclick=()=>jumpDifference(-1);
+$('nextDifference').onclick=()=>jumpDifference(1);
+document.addEventListener('keydown',event=>{if(event.key==='F7'&&!$('nextDifference').disabled){event.preventDefault();jumpDifference(event.shiftKey?-1:1);}});
 // Use the same scroll progress when documents have different lengths or folds.
 function linkResultScroll(editors){
  const scrollers=editors.map(editor=>editor.view.scrollDOM),positions=new WeakMap();
@@ -11,6 +30,7 @@ function linkResultScroll(editors){
  for(const el of scrollers)positions.set(el,{top:el.scrollTop,left:el.scrollLeft});
  function onScroll(event){
   const source=event.currentTarget,last=positions.get(source);
+  if(!active){positions.set(source,{top:source.scrollTop,left:source.scrollLeft});return;}
   // CodeMirror may adjust scroll offsets while rendering virtual lines. Only
   // the pane the user is operating may drive the pair, preventing feedback.
   if(active&&source!==active){
@@ -41,7 +61,9 @@ function linkResultScroll(editors){
  const geometry=typeof ResizeObserver==='undefined'?null:new ResizeObserver(()=>{if(active)queue(active,true,true);});
  for(const editor of editors)geometry?.observe(editor.view.contentDOM);
  for(const el of scrollers){el.addEventListener('scroll',onScroll,{passive:true});for(const name of gestures)el.addEventListener(name,activate,{passive:true});}
- return ()=>{geometry?.disconnect();cancelAnimationFrame(frame);for(const el of scrollers){el.removeEventListener('scroll',onScroll);for(const name of gestures)el.removeEventListener(name,activate);}};
+ const disconnect=()=>{geometry?.disconnect();cancelAnimationFrame(frame);for(const el of scrollers){el.removeEventListener('scroll',onScroll);for(const name of gestures)el.removeEventListener(name,activate);}};
+ disconnect.pause=()=>{active=null;cancelAnimationFrame(frame);frame=0;pending=null;};
+ return disconnect;
 }
 function linkInputHeights(editors){
  if(typeof ResizeObserver==='undefined')return;
@@ -70,7 +92,7 @@ for(const side of ['left','right'])inputEditors[side]=DiffEditor.create($(side+'
 linkInputHeights(inputEditors);
 for(const side of ['left','right'])document.querySelector(`label[for="${side}"]`).onclick=()=>inputEditors[side].focus();
 function syncInputs(){for(const side of ['left','right'])inputEditors[side].setValue($(side).value);}
-function clearResultEditors(){disconnectResultScroll();disconnectResultScroll=()=>{};resultEditors.forEach(editor=>editor.destroy());resultEditors=[];}
+function clearResultEditors(){disconnectResultScroll();disconnectResultScroll=()=>{};resultEditors.forEach(editor=>editor.destroy());resultEditors=[];differenceLocations=[];differenceIndex=-1;updateDifferenceNavigation();}
 function foldTargets(name){return name==='result'?resultEditors:[inputEditors[name]];}
 document.querySelectorAll('[data-fold]').forEach(button=>button.onclick=()=>{for(const editor of foldTargets(button.dataset.fold))editor.fold();});
 document.querySelectorAll('[data-unfold]').forEach(button=>button.onclick=()=>{for(const editor of foldTargets(button.dataset.unfold))editor.unfold();});
@@ -79,7 +101,7 @@ document.querySelectorAll('[data-current]').forEach(button=>button.onclick=()=>c
 document.querySelectorAll('[data-expand-current]').forEach(button=>button.onclick=()=>currentAction(inputEditors[button.dataset.expandCurrent],true));
 // Keep the editor selection when clicking code toolbar buttons, including result buttons.
 document.addEventListener('mousedown',event=>{if(event.target.closest('.code-actions button'))event.preventDefault();});
-function stale(){counts();$('status').textContent='内容已更新，请重新对比';$('copy').disabled=true;}
+function stale(){counts();$('status').textContent='内容已更新，请重新对比';$('copy').disabled=true;differenceIndex=-1;updateDifferenceNavigation(true);resultEditors.forEach(editor=>editor.clearDifference());}
 [left,right,$('spaces'),$('case')].forEach(el=>el.addEventListener('input',stale));
 function toast(s){$('toast').textContent=s;$('toast').classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2200);}
 const examples={
@@ -105,6 +127,6 @@ $('example').onclick=()=>{[left.value,right.value]=examples[language.value]||exa
 $('swap').onclick=()=>{[left.value,right.value]=[right.value,left.value];stale();if(report)run();};
 $('clear').onclick=()=>{left.value='';right.value='';counts();clearResultEditors();$('result').className='result empty';$('result').innerHTML='<div class="empty-icon">≠</div><h3>让变化浮现</h3><p>输入左右两段文本，点击「开始对比」查看差异</p>';$('summary').hidden=true;$('copy').disabled=true;$('status').textContent='等待对比';report='';inputEditors.left.focus();};
 function renderCode(host,parts,side,lineHighlights){const chunks=parts.filter(p=>p[side]).map(p=>({text:p[side],type:p.type}));resultEditors.push(DiffEditor.create(host,{value:chunks.map(p=>p.text).join(''),language:language.value,readOnly:true,label:side==='left'?'原始文本对比结果':'修改后文本对比结果',changes:chunks,changedLines:lineHighlights[side],changeSide:side}));}
-function run(){if(!left.value&&!right.value){toast('请先输入需要对比的文本');inputEditors.left.focus();return;}const options={spaces:$('spaces').checked,case:$('case').checked};const data=compareText(left.value,right.value,options);clearResultEditors();$('result').className='result';$('result').replaceChildren();const grid=document.createElement('div');grid.className='diff-grid';for(const side of ['left','right']){const pane=document.createElement('section');pane.className='diff-pane';const title=document.createElement('div');title.className='diff-title';title.textContent=side==='left'?'原始文本 · 删除标红':'修改后文本 · 新增标绿';const pre=document.createElement('div');pre.className='result-code';renderCode(pre,data.parts,side,data.lineHighlights);const actions=document.createElement('div');actions.className='code-actions';const editor=resultEditors[resultEditors.length-1];for(const [label,expand] of [['折叠当前',false],['展开当前',true]]){const button=document.createElement('button');button.textContent=label;button.setAttribute('aria-label',(side==='left'?'原始文本结果：':'修改后文本结果：')+label);button.onclick=()=>currentAction(editor,expand);actions.append(button);}title.append(actions);pane.append(title,pre);grid.append(pane);}$('result').append(grid);disconnectResultScroll=linkResultScroll(resultEditors);$('summary').hidden=false;$('summary').replaceChildren();for(const [cls,t] of [['added',`+ 新增 ${data.added} 字符`],['removed',`− 删除 ${data.removed} 字符`],['',data.coarse?'大段差异按整块显示':options.spaces||options.case?'已按所选忽略规则对比':'逐字符精确对比']]){const s=document.createElement('span');s.className=cls;s.textContent=t;$('summary').append(s);}$('status').textContent=data.added||data.removed?'发现差异':options.spaces||options.case?'按所选规则一致':'文本完全一致';report=`文本对比报告 · ${language.selectedOptions[0].textContent}\n新增 ${data.added} 字符，删除 ${data.removed} 字符\n${options.spaces?'已忽略空白\n':''}${options.case?'已忽略大小写\n':''}${data.coarse?'大段差异按整块显示\n':''}\n`+data.parts.map(p=>(p.type==='add'?'+ ':p.type==='delete'?'- ':'  ')+(p.type==='add'?p.right:p.left)).join('');$('copy').disabled=false;}
+function run(){if(!left.value&&!right.value){toast('请先输入需要对比的文本');inputEditors.left.focus();return;}const options={spaces:$('spaces').checked,case:$('case').checked};const data=compareText(left.value,right.value,options);clearResultEditors();differenceLocations=data.differences;updateDifferenceNavigation();$('result').className='result';$('result').replaceChildren();const grid=document.createElement('div');grid.className='diff-grid';for(const side of ['left','right']){const pane=document.createElement('section');pane.className='diff-pane';const title=document.createElement('div');title.className='diff-title';title.textContent=side==='left'?'原始文本 · 删除标红':'修改后文本 · 新增标绿';const pre=document.createElement('div');pre.className='result-code';renderCode(pre,data.parts,side,data.lineHighlights);const actions=document.createElement('div');actions.className='code-actions';const editor=resultEditors[resultEditors.length-1];for(const [label,expand] of [['折叠当前',false],['展开当前',true]]){const button=document.createElement('button');button.textContent=label;button.setAttribute('aria-label',(side==='left'?'原始文本结果：':'修改后文本结果：')+label);button.onclick=()=>currentAction(editor,expand);actions.append(button);}title.append(actions);pane.append(title,pre);grid.append(pane);}$('result').append(grid);disconnectResultScroll=linkResultScroll(resultEditors);$('summary').hidden=false;$('summary').replaceChildren();for(const [cls,t] of [['added',`+ 新增 ${data.added} 字符`],['removed',`− 删除 ${data.removed} 字符`],['',data.coarse?'大段差异按整块显示':options.spaces||options.case?'已按所选忽略规则对比':'逐字符精确对比']]){const s=document.createElement('span');s.className=cls;s.textContent=t;$('summary').append(s);}$('status').textContent=data.added||data.removed?'发现差异':options.spaces||options.case?'按所选规则一致':'文本完全一致';report=`文本对比报告 · ${language.selectedOptions[0].textContent}\n新增 ${data.added} 字符，删除 ${data.removed} 字符\n${options.spaces?'已忽略空白\n':''}${options.case?'已忽略大小写\n':''}${data.coarse?'大段差异按整块显示\n':''}\n`+data.parts.map(p=>(p.type==='add'?'+ ':p.type==='delete'?'- ':'  ')+(p.type==='add'?p.right:p.left)).join('');$('copy').disabled=false;}
 language.onchange=()=>{for(const editor of Object.values(inputEditors))editor.setLanguage(language.value);const label=language.selectedOptions[0].textContent;for(const [el,name] of [[left,'原始'],[right,'修改后']])el.placeholder=`在这里粘贴${name}${label==='纯文本'?'文本':label+'代码'}…`;if(report&&!$('copy').disabled)run();};
 $('compare').onclick=()=>run();$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(report);toast('差异报告已复制');}catch{toast('复制失败，请检查浏览器剪贴板权限');}};document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();run();}});counts();

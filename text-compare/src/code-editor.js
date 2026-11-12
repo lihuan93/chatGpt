@@ -1,4 +1,4 @@
-import {EditorState,Compartment} from '@codemirror/state';
+import {EditorState,Compartment,StateEffect,StateField} from '@codemirror/state';
 import {EditorView,keymap,lineNumbers,drawSelection,Decoration,placeholder} from '@codemirror/view';
 import {foldGutter,codeFolding,foldEffect,unfoldEffect,unfoldAll,syntaxHighlighting,defaultHighlightStyle,bracketMatching,indentOnInput,StreamLanguage,ensureSyntaxTree,foldable,foldedRanges} from '@codemirror/language';
 import {defaultKeymap,history,historyKeymap,indentWithTab} from '@codemirror/commands';
@@ -16,7 +16,23 @@ const theme=EditorView.theme({
  '.cm-added':{backgroundColor:'#d9efdf',boxShadow:'0 1px 0 #85b795'},
  '.cm-removed':{backgroundColor:'#f8e1db',textDecoration:'line-through',boxShadow:'0 1px 0 #dcaa9a'},
  '.cm-line-added':{backgroundColor:'#eff8f1'},
- '.cm-line-removed':{backgroundColor:'#fff1ed'}
+ '.cm-line-removed':{backgroundColor:'#fff1ed'},
+ '.cm-current-difference':{boxShadow:'inset 3px 0 #487b67, inset 0 0 0 1px #7d9e8b'}
+});
+const currentDifference=StateEffect.define();
+const currentDifferenceField=StateField.define({
+ create:()=>Decoration.none,
+ update(value,tr){
+  value=value.map(tr.changes);
+  for(const effect of tr.effects)if(effect.is(currentDifference)){
+   if(!effect.value){value=Decoration.none;continue;}
+   const {from,to}=effect.value,first=tr.state.doc.lineAt(from).number,last=tr.state.doc.lineAt(Math.max(from,to-1)).number,ranges=[];
+   for(let n=first;n<=last;n++)ranges.push(Decoration.line({class:'cm-current-difference'}).range(tr.state.doc.line(n).from));
+   value=Decoration.set(ranges,true);
+  }
+  return value;
+ },
+ provide:field=>EditorView.decorations.from(field)
 });
 function codeRanges(state){
  ensureSyntaxTree(state,state.doc.length,1000);
@@ -76,8 +92,13 @@ export function create(parent,{value='',language='json',readOnly=false,label='�
  for(const number of new Set(changedLines)){
   if(number>=1&&number<=doc.lines)decorations.push(Decoration.line({class:changeSide==='left'?'cm-line-removed':'cm-line-added'}).range(doc.line(number).from));
  }
- const view=new EditorView({parent,state:EditorState.create({doc:value,extensions:[languageSlot.of(languageExtensions(language,readOnly)),lineNumbers(),foldGutter({openText:'⌄',closedText:'›'}),codeFolding({placeholderText:' … '}),syntaxHighlighting(defaultHighlightStyle),bracketMatching(),indentOnInput(),drawSelection(),history(),keymap.of([...foldingKeys,...defaultKeymap,...historyKeymap,indentWithTab]),theme,EditorView.lineWrapping,EditorState.readOnly.of(readOnly),EditorView.editable.of(!readOnly),EditorView.contentAttributes.of({'aria-label':label,spellcheck:'false',...(readOnly?{tabindex:'0'}:{})}),EditorView.domEventHandlers({mousemove(event,view){hoverPosition=view.posAtCoords({x:event.clientX,y:event.clientY});},keydown(){hoverPosition=null;}}),EditorView.decorations.of(Decoration.set(decorations,true)),...(!readOnly?[EditorState.changeFilter.of(tr=>!tr.docChanged||tr.newDoc.length<=20000)]:[]),EditorView.updateListener.of(update=>{if(update.selectionSet||update.docChanged)hoverPosition=null;if(update.docChanged)onChange?.(update.state.doc.toString());})]})});
- return {view,getValue(){return view.state.doc.toString();},foldedCount(){let count=0;foldedRanges(view.state).between(0,view.state.doc.length,()=>count++);return count;},setValue(value){if(value!==view.state.doc.toString())view.dispatch({changes:{from:0,to:view.state.doc.length,insert:value}});},setLanguage(name){unfoldAll(view);hoverPosition=null;view.dispatch({effects:languageSlot.reconfigure(languageExtensions(name,readOnly))});},fold(){return foldEveryLevel(view);},unfold(){return unfoldAll(view);},foldCurrent(){return foldCurrent(view,true);},unfoldCurrent(){return unfoldCurrent(view,true);},focus(){view.focus();},destroy(){view.destroy();}};
+ const view=new EditorView({parent,state:EditorState.create({doc:value,extensions:[languageSlot.of(languageExtensions(language,readOnly)),lineNumbers(),currentDifferenceField,foldGutter({openText:'⌄',closedText:'›'}),codeFolding({placeholderText:' … '}),syntaxHighlighting(defaultHighlightStyle),bracketMatching(),indentOnInput(),drawSelection(),history(),keymap.of([...foldingKeys,...defaultKeymap,...historyKeymap,indentWithTab]),theme,EditorView.lineWrapping,EditorState.readOnly.of(readOnly),EditorView.editable.of(!readOnly),EditorView.contentAttributes.of({'aria-label':label,spellcheck:'false',...(readOnly?{tabindex:'0'}:{})}),EditorView.domEventHandlers({mousemove(event,view){hoverPosition=view.posAtCoords({x:event.clientX,y:event.clientY});},keydown(){hoverPosition=null;}}),EditorView.decorations.of(Decoration.set(decorations,true)),...(!readOnly?[EditorState.changeFilter.of(tr=>!tr.docChanged||tr.newDoc.length<=20000)]:[]),EditorView.updateListener.of(update=>{if(update.selectionSet||update.docChanged)hoverPosition=null;if(update.docChanged)onChange?.(update.state.doc.toString());})]})});
+ return {view,revealDifference(range){
+  const from=Math.max(0,Math.min(range.from,view.state.doc.length)),to=Math.max(from,Math.min(range.to,view.state.doc.length)),effects=[];
+  foldedRanges(view.state).between(0,view.state.doc.length,(a,b)=>{if(a<=to&&b>=from)effects.push(unfoldEffect.of({from:a,to:b}));});
+  effects.push(currentDifference.of({from,to}),EditorView.scrollIntoView(from,{y:'center'}));
+  view.dispatch({selection:{anchor:from,head:to},effects});
+ },clearDifference(){view.dispatch({effects:currentDifference.of(null)});},getValue(){return view.state.doc.toString();},foldedCount(){let count=0;foldedRanges(view.state).between(0,view.state.doc.length,()=>count++);return count;},setValue(value){if(value!==view.state.doc.toString())view.dispatch({changes:{from:0,to:view.state.doc.length,insert:value}});},setLanguage(name){unfoldAll(view);hoverPosition=null;view.dispatch({effects:languageSlot.reconfigure(languageExtensions(name,readOnly))});},fold(){return foldEveryLevel(view);},unfold(){return unfoldAll(view);},foldCurrent(){return foldCurrent(view,true);},unfoldCurrent(){return unfoldCurrent(view,true);},focus(){view.focus();},destroy(){view.destroy();}};
 }
 // Exposed for deterministic parser checks without a browser renderer.
 export function ranges(value,language){const state=EditorState.create({doc:value,extensions:[mode(language),codeFolding()]});return codeRanges(state).map(({from,to})=>({from,to}));}
