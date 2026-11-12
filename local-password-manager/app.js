@@ -2,6 +2,7 @@ import {cleanUrl, readImport, mergeRows, exportRows} from './core.js';
 const $ = s => document.querySelector(s);
 const STORAGE_KEY = 'accountsV1';
 let rows = [], editId = null, toastTimer;
+const expandedDomains = new Set();
 chrome.storage.local.setAccessLevel({accessLevel: 'TRUSTED_CONTEXTS'}).catch(() => {});
 function toast(message) {
   $('#toast').textContent = message; $('#toast').hidden = false;
@@ -63,10 +64,16 @@ function render() {
     domains.get(hostname).push(row);
   }
   for (const [hostname, accounts] of [...domains].sort(([a],[b]) => a.localeCompare(b))) {
-    const group = element('section', 'domain-group');
-    const groupHeading = element('div', 'domain-heading');
+    const group = element('details', 'domain-group');
+    group.open = expandedDomains.has(hostname);
+    group.addEventListener('toggle', () => {
+      if (group.open) expandedDomains.add(hostname);
+      else expandedDomains.delete(hostname);
+    });
+    const groupHeading = element('summary', 'domain-heading');
     const groupTitle = element('h2', 'domain-title', hostname);
-    groupHeading.append(groupTitle, element('span', 'domain-count', `${accounts.length} 个账号`));
+    const arrow = element('span', 'domain-arrow', '›'); arrow.setAttribute('aria-hidden', 'true');
+    groupHeading.append(arrow, groupTitle, element('span', 'domain-count', `${accounts.length} 个账号`));
     group.append(groupHeading); list.append(group);
     for (const row of accounts) {
       const card = element('article', 'account-card');
@@ -79,7 +86,7 @@ function render() {
       const link = element('a','site-link',row.url); link.href = row.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
       title.append(link); identity.append(title);
       const tools = element('div','card-tools');
-      tools.append(action('编辑', () => openEditor(row)), action('删除', async () => {
+      tools.append(action('复制账号', () => openEditor(row, true)), action('编辑', () => openEditor(row)), action('删除', async () => {
         if (await confirmAction('删除这个账号？', `即将删除「${row.name || row.username}」，此操作无法撤销。`)) {
           await mutate(current => current.filter(r => r.id !== row.id)); toast('账号已删除');
         }
@@ -103,12 +110,15 @@ function render() {
     }
   }
 }
-function openEditor(row) {
-  editId = row?.id || null;
+function openEditor(row, duplicate = false) {
+  editId = duplicate ? null : row?.id || null;
   const form = $('#account-form'); form.reset();
   for (const field of ['url','name','username','password','notes']) form.elements[field].value = row?.[field] || '';
   form.elements.password.type = 'password'; $('#toggle-editor').textContent = '显示';
-  $('#editor-title').textContent = row ? '编辑账号' : '新增账号'; updateAccountHint(); $('#editor').showModal();
+  $('#editor-title').textContent = duplicate ? '复制账号' : row ? '编辑账号' : '新增账号';
+  $('#copy-hint').hidden = !duplicate;
+  updateAccountHint(); $('#editor').showModal();
+  if (duplicate) { form.elements.url.focus(); form.elements.url.select(); }
 }
 function updateAccountHint() {
   const form = $('#account-form'), hint = $('#account-hint');

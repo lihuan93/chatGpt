@@ -27,10 +27,21 @@ test('merge keeps existing secrets and deduplicates incoming rows', () => {
 
 test('domain matching permits paths and ports, rejects subdomains and lookalikes', () => {
   const rows = readImport('{"https://example.com/old":[{"username":"a","password":"p"}],"https://login.example.com":[{"username":"b","password":"q"}],"https://example.com.evil.test":[{"username":"c","password":"r"}]}');
-  assert.deepEqual(matchingAccounts(rows,'https://example.com:8443/login').map(r=>r.username),['a']);
+  assert.deepEqual(matchingAccounts(rows,'https://example.com:8443/login','domain').map(r=>r.username),['a']);
   assert.deepEqual(matchingAccounts(rows,'chrome://extensions'),[]);
   assert.deepEqual(matchingAccounts(rows,'not a url'),[]);
   const ip = readImport('{"http://192.168.1.41/page/login_zmkm.html":[{"username":"tlbxm","password":"x"}]}');
-  assert.equal(matchingAccounts(ip,'http://192.168.1.41/another').length,1);
+  assert.equal(matchingAccounts(ip,'http://192.168.1.41/another','domain').length,1);
   assert.equal(matchingAccounts(ip,'http://192.168.1.42/another').length,0);
+});
+
+
+test('page matching separates paths, ports and protocols; ignores query and ordinary anchors', () => {
+  const rows = readImport('{"http://192.168.1.41:8080/app/login":[{"username":"app","password":"a"}],"http://192.168.1.41:8080/other/login":[{"username":"other","password":"b"}],"http://192.168.1.41:8081/app/login":[{"username":"port","password":"c"}],"https://192.168.1.41:8080/app/login":[{"username":"tls","password":"d"}]}');
+  assert.deepEqual(matchingAccounts(rows,'http://192.168.1.41:8080/app/login?redirect=home#form').map(r=>r.username),['app']);
+  assert.equal(matchingAccounts(rows,'http://192.168.1.41:8080/app/login/').length,0);
+  assert.equal(matchingAccounts(rows,'http://192.168.1.41:8080/missing').length,0);
+  assert.equal(matchingAccounts(rows,'http://192.168.1.41:8080/missing','domain').length,4);
+  const hash = readImport('{"https://a.test/#/login":[{"username":"a","password":"x"}],"https://a.test/#/admin":[{"username":"b","password":"y"}]}');
+  assert.deepEqual(matchingAccounts(hash,'https://a.test/#/login?redirect=home').map(r=>r.username),['a']);
 });

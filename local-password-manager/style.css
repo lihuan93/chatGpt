@@ -3,3 +3,5 @@
 .domain-group{margin:26px 0 30px}.domain-group:first-child{margin-top:0}.domain-heading{display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:0 3px}.domain-title{font-size:14px;font-weight:650;color:#55776a;overflow-wrap:anywhere;min-width:0}.domain-count{font-size:11px;color:#82998c;background:#eaf1ec;border-radius:12px;padding:2px 9px;white-space:nowrap;flex-shrink:0}
 
 .account-hint{padding:10px 12px;border-radius:7px;border:1px solid #e4d9ae;background:#fffbef;color:#8c7539;font-size:12px;line-height:1.7}.account-hint.duplicate{background:#fff2f0;color:#a6584e;border-color:#f0d1ca}
+
+.domain-heading{cursor:pointer;list-style:none;padding:12px 14px;margin-bottom:0;border:1px solid #dfe8e2;border-radius:9px;background:#fff}.domain-heading::-webkit-details-marker{display:none}.domain-heading:hover{background:#edf4f0}.domain-heading:focus-visible{outline:2px solid #247467;outline-offset:3px}.domain-title{margin:0;flex:1}.domain-arrow{font-size:22px;line-height:1;transition:transform .15s}.domain-group[open]>.domain-heading{margin-bottom:12px}.domain-group[open]>.domain-heading .domain-arrow{transform:rotate(90deg)}

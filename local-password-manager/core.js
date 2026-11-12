@@ -6,16 +6,24 @@ export function cleanUrl(value) {
   return url.href;
 }
 
-export function matchingAccounts(rows, pageUrl) {
+export function pageKey(value) {
+  const url = new URL(value);
+  // Keep hash-router paths, but ignore ordinary anchors and transient query strings.
+  const route = /^#(?:\/|!)/.test(url.hash) ? url.hash.split('?')[0] : '';
+  return url.origin + url.pathname + route;
+}
+
+export function matchingAccounts(rows, pageUrl, scope = 'page') {
   let page;
   try { page = new URL(pageUrl); } catch { return []; }
   if (!['http:', 'https:'].includes(page.protocol)) return [];
   return rows.filter(row => {
     try {
       const saved = new URL(row.url);
-      return ['http:', 'https:'].includes(saved.protocol) && saved.hostname === page.hostname;
+      return ['http:', 'https:'].includes(saved.protocol) && saved.hostname === page.hostname &&
+        (scope === 'domain' || pageKey(saved.href) === pageKey(page.href));
     } catch { return false; }
-  }).sort((a,b) => Number(b.url === page.href) - Number(a.url === page.href) || Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+  }).sort((a,b) => Number(pageKey(b.url) === pageKey(page.href)) - Number(pageKey(a.url) === pageKey(page.href)) || Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
 }
 
 // Strip trailing commas only outside JSON strings; never evaluate imported code.

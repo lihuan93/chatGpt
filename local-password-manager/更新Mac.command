@@ -26,7 +26,7 @@ function run(argv) {
   if (!text) throw Error('manifest.json 不可读取');
   var m = JSON.parse(ObjC.unwrap(text));
   if (m.manifest_version !== 3 || m.name !== '本地账号簿') throw Error('不是本地账号簿扩展');
-  var files = ['index.html','app.js','style.css','core.js','fill.js','popup.js','popup.css',m.action.default_popup,m.icons['128']];
+  var files = ['index.html','app.js','style.css','core.js','fill.js','popup.js','popup.css','background.js','content.js',m.action.default_popup,m.icons['128']];
   files.forEach(function(file) {
     if (!file || !$.NSFileManager.defaultManager.isReadableFileAtPath(root + '/' + file)) throw Error('缺少文件：' + file);
   });
