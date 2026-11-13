@@ -43,3 +43,9 @@ python3 -m http.server 8000 --directory dist
 ```
 
 已包含构建好的静态页面，可直接运行；编辑器源码修改与构建步骤见项目 README。
+
+## 本地书架 · iPhone 原生音频播放器
+
+源码与安装说明：[`local-shelf/`](local-shelf/README.md)，Xcode工程位于 `local-shelf/LocalShelf.xcodeproj`。
+
+SwiftUI 本地文件夹浏览与音频播放，支持 M4A/MP3/WMA、后台和锁屏播放、逐文件夹倍速与循环模式、断点续听、自定义睡眠定时。未设置过的目录默认列表循环。使用免费 Apple 账号安装到个人 iPhone；仓库不包含音频、播放进度或个人签名。最新整合版本的编译及真机验证范围见 [`local-shelf/VALIDATION.md`](local-shelf/VALIDATION.md)。
